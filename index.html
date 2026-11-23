@@ -16,7 +16,7 @@
       -webkit-user-select: none;
       touch-action: none;
     }
-    canvas { display: block; }
+    canvas { display: block; width: 100vw; height: 100vh; }
 
     .touch-btn {
       backdrop-filter: blur(4px);
@@ -29,9 +29,49 @@
       border-color: rgba(52, 211, 153, 0.8);
     }
 
-    .wz-scanline {
-      background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.025) 50%, rgba(255,255,255,0) 100%);
-      background-size: 100% 4px;
+    /* ===== LOBBY CARTOON ===== */
+    #lobby { font-family: ui-rounded, "SF Pro Rounded", "Trebuchet MS", system-ui, sans-serif; }
+    #lobby-pattern {
+      opacity: .18;
+      background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27120%27%20height%3D%27120%27%20viewBox%3D%270%200%20120%20120%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-width%3D%272.5%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M30%2024%20L50%2024%20L50%2042%20Q50%2054%2040%2060%20Q30%2054%2030%2042%20Z%27/%3E%3Cpath%20d%3D%27M35%2035%20l5%20-6%20l5%206%27/%3E%3C/g%3E%3Cpath%20d%3D%27M92%2080%20l3%208%20l8%203%20l-8%203%20l-3%208%20l-3%20-8%20l-8%20-3%20l8%20-3z%27%20fill%3D%27white%27/%3E%3C/svg%3E");
+      background-size: 120px 120px;
+      -webkit-mask-image: linear-gradient(to bottom, #000, transparent 65%);
+      mask-image: linear-gradient(to bottom, #000, transparent 65%);
+    }
+    .lobby-title { text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+    .tab-btn { padding: 4px 0; border-bottom: 3px solid transparent; transition: color .15s, border-color .15s; }
+    .tab-btn:hover { color: #fff; }
+    .tab-btn.tab-active { color: #fff; border-color: #fbbf24; }
+    .lobby-side, #lobby-right { scrollbar-width: none; }
+    .lobby-side::-webkit-scrollbar, #lobby-right::-webkit-scrollbar { display: none; }
+    #deploy-btn { text-shadow: 0 1px 0 rgba(255,255,255,.45); }
+    #deploy-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b45309; }
+    @keyframes lobbyIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .tab-panel:not(.hidden) { animation: lobbyIn .22s ease-out; }
+    .lobby-foot { text-shadow: 0 1px 3px rgba(0,0,0,.85); }
+    @media (max-height: 420px) {
+      #lobby-top { padding: 4px 10px !important; }
+      #lobby-top .lobby-title { font-size: 14px !important; }
+      #lobby-right { gap: 4px !important; }
+      #squad-box { padding: 6px !important; }
+      #squad-box .sq-head { margin-bottom: 4px !important; padding-bottom: 3px !important; }
+      #squad-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+      #squad-list > * { padding: 3px 5px !important; border-width: 1px !important; gap: 4px !important; }
+      #squad-list > * + * { margin-top: 0 !important; }
+      #squad-list .sq-ico { width: 16px !important; height: 16px !important; font-size: 11px !important; }
+      #mode-card { padding: 4px !important; gap: 6px !important; }
+      #mode-card .mode-thumb { width: 34px !important; height: 24px !important; }
+      #deploy-btn { padding-top: 4px !important; padding-bottom: 4px !important; font-size: 15px !important; }
+    }
+    @media (min-height: 560px) and (min-width: 900px) {
+      #lobby-top { padding: 10px 20px !important; }
+      #lobby-top .lobby-title { font-size: 1.5rem !important; }
+      #lobby-top .tab-btn { font-size: .875rem; }
+      #deploy-btn { font-size: 1.5rem !important; padding-top: .75rem !important; padding-bottom: .75rem !important; }
+    }
+    @media (orientation: portrait) {
+      #lobby-right { width: min(290px, 56vw) !important; }
+      #side-panel { width: min(260px, 44vw) !important; }
     }
   </style>
 </head>
@@ -129,142 +169,147 @@
   </div>
 
   <!-- =========================================================
-       LOBBY INSPIRADO NO WARZONE (COM CRIAR / ENTRAR EM SALA)
+       LOBBY ESTILO WARZONE (ABAS + PERFIL + ESQUADRÃO)
        ========================================================= -->
-  <div id="lobby" class="wz-scanline fixed inset-0 z-20 flex flex-col justify-between overflow-y-auto bg-gradient-to-r from-slate-950/85 via-slate-950/20 to-slate-950/70 p-3 sm:p-6">
+  <div id="lobby" class="pointer-events-none fixed inset-0 z-20 flex select-none flex-col overflow-hidden">
+    <div id="lobby-pattern" class="pointer-events-none absolute inset-0"></div>
 
-    <!-- Barra Superior Estilo WZ -->
-    <div class="flex shrink-0 items-center justify-between border-b border-white/10 pb-2">
+    <!-- Barra superior -->
+    <div id="lobby-top" class="pointer-events-auto relative z-10 flex shrink-0 items-center justify-between gap-2 whitespace-nowrap border-b-2 border-white/10 bg-[#0c1a44]/85 px-3 py-1.5 backdrop-blur">
       <div class="flex items-center gap-3 sm:gap-5">
         <div class="flex items-center gap-2">
-          <span class="h-2.5 w-2.5 rotate-45 bg-amber-400"></span>
-          <span class="text-sm sm:text-lg font-black tracking-[0.2em] text-white">NEXUS <span class="text-amber-400">WZ</span></span>
+          <span class="h-3 w-3 rotate-45 bg-amber-400"></span>
+          <span class="lobby-title text-base font-black tracking-wide text-white">NEXUS <span class="text-amber-400">WZ</span></span>
         </div>
-        <div class="hidden sm:flex items-center gap-5 text-xs tracking-widest text-slate-400">
-          <span class="border-b-2 border-amber-400 pb-2 -mb-[9px] font-bold text-white">JOGAR</span>
-          <span>ARMAMENTO</span>
-          <span>OPERADORES</span>
-          <span>MULTIPLAYER</span>
+        <div class="flex items-center gap-3 sm:gap-4 text-[10px] font-black tracking-wider text-slate-300/80">
+          <button data-tab="play" class="tab-btn tab-active">JOGAR</button>
+          <button data-tab="gear" class="tab-btn">ARMAMENTO</button>
+          <button data-tab="op" class="tab-btn">OPERADOR</button>
+          <button data-tab="net" class="tab-btn">ONLINE</button>
         </div>
       </div>
-
-      <div class="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs">
-        <div id="net-status-pill" class="rounded border border-emerald-500/30 bg-emerald-950/40 px-2 py-0.5 sm:px-2.5 sm:py-1 text-emerald-300">
-          REDE: <strong id="net-status-text" class="text-white">LOCAL</strong>
+      <div class="flex items-center gap-2">
+        <div class="relative overflow-hidden rounded-lg border-2 border-amber-200 bg-amber-400 px-2.5 py-1 text-[11px] font-black text-slate-900 shadow-[0_2px_0_#b45309]">
+          [<span id="pl-level">1</span>] <span id="pl-name">OPERADOR</span>
+          <div class="absolute inset-x-0 bottom-0 h-[3px] bg-amber-700/30"><div id="pl-xp-bar" class="h-full bg-white/80" style="width:0%"></div></div>
         </div>
-        <div class="hidden sm:block text-slate-400">SERVIDOR: <span class="text-slate-200">P2P-BR</span></div>
+        <div id="net-status-pill" class="rounded-lg border-2 border-emerald-400/70 bg-emerald-900/60 px-2.5 py-1 text-[10px] font-black text-emerald-300">
+          REDE: <span id="net-status-text">LOCAL</span>
+        </div>
       </div>
     </div>
 
-    <!-- Meio: Colunas Compactas -->
-    <div class="my-auto grid grid-cols-1 gap-3 py-2 lg:grid-cols-12 items-center">
+    <!-- Corpo -->
+    <div id="lobby-body" class="pointer-events-none relative min-h-0 flex-1">
 
-      <!-- Coluna Esquerda: Modo e Armamento -->
-      <div class="space-y-2.5 lg:col-span-4">
-        <div class="inline-flex items-center gap-2 rounded bg-amber-500/15 border border-amber-400/40 px-2 py-0.5 text-[10px] font-bold tracking-widest text-amber-300">
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-          PRONTO PARA DEPLOY
-        </div>
-
-        <div>
-          <div class="text-[10px] tracking-[0.2em] text-slate-400">MODO SELECIONADO</div>
-          <h1 id="lobby-mode-title" class="text-xl sm:text-3xl font-black tracking-tight text-white uppercase leading-tight">
-            CAMPO DE TIRO
-          </h1>
-          <p id="lobby-mode-desc" class="mt-0.5 max-w-sm text-[11px] sm:text-xs text-slate-300 leading-snug">
-            Alvos a 15m, 30m e 50m, corredores de Slide Tático sob barreiras baixas e testes de ADS.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap gap-1.5">
-          <button data-mode="range" class="mode-btn rounded border border-amber-400 bg-amber-400/20 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold tracking-wider text-amber-300 transition">
-            CAMPO DE TIRO
-          </button>
-          <button data-mode="slide" class="mode-btn rounded border border-white/15 bg-slate-900/70 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-300 hover:border-white/35 transition">
-            CIRCUITO SLIDE
-          </button>
-          <button data-mode="longshot" class="mode-btn rounded border border-white/15 bg-slate-900/70 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-300 hover:border-white/35 transition">
-            LONGA DISTÂNCIA
-          </button>
-        </div>
-
-        <div class="max-w-sm rounded border border-white/10 bg-slate-950/65 p-2 backdrop-blur-sm">
-          <div class="mb-1 flex items-center justify-between text-[10px] tracking-widest text-slate-400">
+      <!-- Painel lateral (ARMAMENTO / OPERADOR / ONLINE) -->
+      <div id="side-panel" class="pointer-events-auto lobby-side absolute bottom-12 left-2 top-2 hidden w-[min(280px,36vw)] overflow-y-auto rounded-2xl border-2 border-white/20 bg-[#0c1a44]/85 p-3 backdrop-blur-sm">
+        <!-- ARMAMENTO -->
+        <div class="tab-panel hidden" data-panel="gear">
+          <div class="flex items-center justify-between text-[9px] tracking-[0.2em] text-slate-400">
             <span>ARMAMENTO ATIVO</span>
             <span id="lobby-weapon-tag" class="text-emerald-400">FUZIL DE ASSALTO</span>
           </div>
-          <div class="grid grid-cols-2 gap-1.5">
-            <button data-weapon="ar" class="weapon-btn rounded border border-emerald-400/70 bg-emerald-500/15 px-2 py-1 text-left transition">
-              <div class="text-[11px] sm:text-xs font-bold text-white">TAC-AR556</div>
-              <div class="text-[10px] text-emerald-300">HOLOGRÁFICA</div>
+          <div class="mt-1.5 grid gap-1.5">
+            <button data-weapon="ar" class="weapon-btn rounded border border-emerald-400/70 bg-emerald-500/15 px-2.5 py-1.5 text-left transition">
+              <div class="flex items-baseline justify-between"><span class="text-[12px] font-bold text-white">TAC-AR556</span><span class="text-[9px] text-emerald-300">HOLOGRÁFICA</span></div>
+              <div class="mt-1 space-y-0.5 text-[9px] text-slate-400">
+                <div class="flex items-center gap-1.5"><span class="w-14">DANO</span><div class="h-1 flex-1 bg-white/10"><div class="h-full bg-emerald-400" style="width:70%"></div></div></div>
+                <div class="flex items-center gap-1.5"><span class="w-14">CADÊNCIA</span><div class="h-1 flex-1 bg-white/10"><div class="h-full bg-emerald-400" style="width:62%"></div></div></div>
+                <div class="flex items-center gap-1.5"><span class="w-14">PENTE</span><div class="h-1 flex-1 bg-white/10"><div class="h-full bg-emerald-400" style="width:60%"></div></div></div>
+              </div>
             </button>
-            <button data-weapon="smg" class="weapon-btn rounded border border-white/15 bg-slate-900/70 px-2 py-1 text-left hover:border-white/35 transition">
-              <div class="text-[11px] sm:text-xs font-bold text-slate-200">VEX-9 SMG</div>
-              <div class="text-[10px] text-slate-400">RÁPIDA</div>
+            <button data-weapon="smg" class="weapon-btn rounded border border-white/15 bg-slate-900/70 px-2.5 py-1.5 text-left transition hover:border-white/35">
+              <div class="flex items-baseline justify-between"><span class="text-[12px] font-bold text-slate-200">VEX-9 SMG</span><span class="text-[9px] text-slate-400">RÁPIDA</span></div>
+              <div class="mt-1 space-y-0.5 text-[9px] text-slate-400">
+                <div class="flex items-center gap-1.5"><span class="w-14">DANO</span><div class="h-1 flex-1 bg-white/10"><div class="h-full bg-amber-400" style="width:48%"></div></div></div>
+                <div class="flex items-center gap-1.5"><span class="w-14">CADÊNCIA</span><div class="h-1 flex-1 bg-white/10"><div class="h-full bg-amber-400" style="width:88%"></div></div></div>
+                <div class="flex items-center gap-1.5"><span class="w-14">PENTE</span><div class="h-1 flex-1 bg-white/10"><div class="h-full bg-amber-400" style="width:80%"></div></div></div>
+              </div>
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Centro: Área Limpa para o Operador Low-Poly -->
-      <div class="hidden lg:block lg:col-span-4"></div>
+        <!-- OPERADOR -->
+        <div class="tab-panel hidden" data-panel="op">
+          <div class="text-[9px] tracking-[0.2em] text-slate-400">CODINOME</div>
+          <input id="callsign-input" type="text" maxlength="12" placeholder="OPERADOR" class="mt-1 w-full rounded border border-white/15 bg-slate-900/90 px-2.5 py-1.5 text-xs font-bold uppercase tracking-widest text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none" />
+          <div class="mt-2.5 flex items-center justify-between text-[9px] tracking-[0.2em] text-slate-400">
+            <span>UNIFORME</span><span id="skin-name" class="text-amber-300">AZUL TÁTICO</span>
+          </div>
+          <div id="skin-list" class="mt-1.5 flex flex-wrap gap-2"></div>
+          <div class="mt-3 grid grid-cols-3 gap-1.5 text-center">
+            <div class="rounded-lg border border-white/10 bg-slate-900/70 py-1"><div id="st-kills" class="text-sm font-black text-white">0</div><div class="text-[8px] tracking-widest text-slate-400">ALVOS</div></div>
+            <div class="rounded-lg border border-white/10 bg-slate-900/70 py-1"><div id="st-heads" class="text-sm font-black text-rose-400">0</div><div class="text-[8px] tracking-widest text-slate-400">HEADSHOTS</div></div>
+            <div class="rounded-lg border border-white/10 bg-slate-900/70 py-1"><div id="st-matches" class="text-sm font-black text-emerald-400">0</div><div class="text-[8px] tracking-widest text-slate-400">PARTIDAS</div></div>
+          </div>
+          <div class="mt-2.5 text-[9px] leading-snug text-slate-500">Nível sobe ao abater alvos: +10 XP por alvo, +15 com tiro na cabeça.</div>
+        </div>
 
-      <!-- Coluna Direita: Multiplayer Online (Criar / Entrar em Sala) -->
-      <div class="lg:col-span-4 flex flex-col items-start lg:items-end">
-        <div class="w-full max-w-xs rounded border border-white/10 bg-slate-950/75 p-3 backdrop-blur-sm space-y-2.5">
+        <!-- ONLINE -->
+        <div class="tab-panel hidden space-y-2" data-panel="net">
           <div class="flex items-center justify-between border-b border-white/10 pb-1.5">
             <div>
-              <div class="text-[10px] tracking-widest text-sky-400">MULTIPLAYER ONLINE</div>
-              <div class="text-xs sm:text-sm font-black tracking-wider text-white">SALA P2P</div>
+              <div class="text-[9px] tracking-widest text-sky-400">MULTIPLAYER ONLINE</div>
+              <div class="text-xs font-black tracking-wider text-white">SALA P2P</div>
             </div>
             <span id="room-players-badge" class="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300">OFFLINE</span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <button id="create-room-btn" class="rounded border border-sky-400/60 bg-sky-500/15 px-2.5 py-1.5 text-[11px] font-bold tracking-wider text-sky-300 hover:bg-sky-500/25 transition">
-              CRIAR SALA
-            </button>
-            <button id="leave-room-btn" class="rounded border border-white/15 bg-slate-900/70 px-2.5 py-1.5 text-[11px] font-bold tracking-wider text-slate-400 hover:text-white transition">
-              DESCONECTAR
-            </button>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button id="create-room-btn" class="rounded border border-sky-400/60 bg-sky-500/15 px-2 py-1.5 text-[10px] font-bold tracking-wider text-sky-300 transition hover:bg-sky-500/25">CRIAR SALA</button>
+            <button id="leave-room-btn" class="rounded border border-white/15 bg-slate-900/70 px-2 py-1.5 text-[10px] font-bold tracking-wider text-slate-400 transition hover:text-white">DESCONECTAR</button>
           </div>
 
-          <div id="room-code-box" class="hidden rounded border border-emerald-500/35 bg-emerald-950/35 px-2.5 py-1.5 flex items-center justify-between">
+          <div id="room-code-box" class="hidden items-center justify-between rounded border border-emerald-500/35 bg-emerald-950/35 px-2.5 py-1.5">
             <div>
               <div class="text-[9px] tracking-widest text-emerald-300">CÓDIGO DA SALA</div>
-              <div id="room-code-display" class="text-sm font-black tracking-[0.22em] text-white select-all">------</div>
+              <div id="room-code-display" class="select-all text-sm font-black tracking-[0.22em] text-white">------</div>
             </div>
-            <button id="copy-code-btn" class="rounded bg-emerald-500/25 px-2 py-1 text-[10px] font-bold text-emerald-200 hover:bg-emerald-500/40">
-              COPIAR
-            </button>
+            <button id="copy-code-btn" class="rounded bg-emerald-500/25 px-2 py-1 text-[10px] font-bold text-emerald-200 hover:bg-emerald-500/40">COPIAR</button>
           </div>
 
           <div class="flex gap-1.5">
-            <input id="join-code-input" type="text" maxlength="6" placeholder="CÓDIGO (EX: A1B2C3)" class="w-full rounded border border-white/15 bg-slate-900/90 px-2.5 py-1.5 text-xs uppercase tracking-widest text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none" />
-            <button id="join-room-btn" class="shrink-0 rounded border border-amber-400/60 bg-amber-400/15 px-3 py-1.5 text-[11px] font-bold tracking-wider text-amber-300 hover:bg-amber-400/25 transition">
-              ENTRAR
-            </button>
+            <input id="join-code-input" type="text" maxlength="6" placeholder="CÓDIGO" class="w-full min-w-0 rounded border border-white/15 bg-slate-900/90 px-2 py-1.5 text-xs uppercase tracking-widest text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none" />
+            <button id="join-room-btn" class="shrink-0 rounded border border-amber-400/60 bg-amber-400/15 px-3 py-1.5 text-[10px] font-bold tracking-wider text-amber-300 transition hover:bg-amber-400/25">ENTRAR</button>
           </div>
 
-          <div id="room-feedback" class="min-h-[14px] text-[10px] text-slate-400">
-            Crie uma sala ou digite o código para jogar online.
-          </div>
+          <div id="room-feedback" class="min-h-[14px] text-[10px] text-slate-400">Crie uma sala ou digite o código para jogar online.</div>
         </div>
       </div>
-    </div>
 
-    <!-- Rodapé: Botão Principal INICIAR -->
-    <div class="flex shrink-0 flex-row items-center justify-between gap-3 border-t border-white/10 pt-2.5">
-      <div class="text-[10px] sm:text-[11px] text-slate-400">
-        ARRASTE A TELA PARA GIRAR O OPERADOR
+      <!-- Coluna direita: esquadrão, modo, iniciar -->
+      <div id="lobby-right" class="pointer-events-auto absolute bottom-2 right-2 top-2 flex w-[min(295px,34vw)] flex-col justify-between gap-2 overflow-y-auto">
+        <div id="squad-box" class="rounded-2xl border-2 border-white/15 bg-[#0c1a44]/85 p-2.5 backdrop-blur-sm">
+          <div class="sq-head mb-1.5 flex items-center justify-between border-b border-white/10 pb-1.5">
+            <span class="text-xs font-black tracking-wider text-white">ESQUADRÃO</span>
+            <span id="squad-count" class="text-[10px] font-black text-sky-300">1/4</span>
+          </div>
+          <div id="squad-list" class="space-y-1.5"></div>
+        </div>
+
+        <div class="space-y-2">
+          <button id="mode-card" class="flex w-full items-center gap-2 rounded-xl border-2 border-white/20 bg-[#0c1a44]/85 p-2 text-left backdrop-blur-sm transition active:scale-[0.98]">
+            <span class="mode-thumb h-10 w-16 shrink-0 rounded-md border border-white/20" style="background:linear-gradient(#60a5fa 0 45%, #e08a3c 45%)"></span>
+            <span class="min-w-0 flex-1 leading-tight">
+              <span class="block text-[9px] font-black tracking-widest text-slate-400">MODO DE JOGO</span>
+              <span id="lobby-mode-title" class="block truncate text-sm font-black text-white">CAMPO DE TIRO</span>
+            </span>
+            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-slate-700 text-white"><svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h12M15 3l4 4-4 4M17 17H5M9 13l-4 4 4 4"/></svg></span>
+          </button>
+
+          <button id="deploy-btn" class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-amber-200 bg-gradient-to-b from-amber-300 to-amber-500 py-2 text-lg font-black tracking-wider text-amber-950 shadow-[0_4px_0_#b45309] transition">
+            <span>INICIAR</span>
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </button>
+        </div>
       </div>
 
-      <button id="deploy-btn" class="group relative flex items-center justify-center gap-2.5 rounded bg-amber-400 px-6 py-2.5 sm:px-8 sm:py-3 text-xs sm:text-sm font-black tracking-[0.18em] text-slate-950 shadow-[0_0_25px_rgba(251,191,36,0.35)] transition hover:bg-amber-300 active:scale-[0.99]">
-        <span>INICIAR</span>
-        <svg class="h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
-      </button>
+      <!-- Rodapé central -->
+      <div class="lobby-foot pointer-events-none absolute bottom-1.5 left-1/2 flex -translate-x-1/2 flex-col items-center gap-0.5 text-center">
+        <div class="text-[8px] sm:text-[9px] font-bold tracking-widest text-white/80">ARRASTE A TELA PARA GIRAR O OPERADOR</div>
+        <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black tracking-wider text-white"><svg viewBox="0 0 40 16" class="h-3 w-7" fill="currentColor"><path d="M0 6h22l4-2h14v3H27l-3 2h-6l-2 7h-5l1-7H0z"/></svg><span id="lobby-summary"></span></div>
+      </div>
     </div>
   </div>
 
@@ -297,6 +342,10 @@
         document.getElementById('pause-overlay').classList.remove('hidden');
         document.getElementById('pause-overlay').classList.add('flex');
         return;
+      }
+
+      function clamp(val, min, max) {
+        return Math.max(min, Math.min(max, val));
       }
 
       // =========================================================
@@ -395,7 +444,7 @@
       scene.background = new THREE.Color(0x87a8c4);
       scene.fog = new THREE.Fog(0x87a8c4, 35, 130);
 
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.05, 200);
+      const camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.08, 200);
       camera.rotation.order = 'YXZ';
       scene.add(camera);
 
@@ -423,14 +472,19 @@
       dirLight.shadow.camera.bottom = -d;
       scene.add(dirLight);
 
-      const lobbySpot = new THREE.PointLight(0xfbbf24, 1.4, 14);
-      lobbySpot.position.set(0.3, 2.8, 12.6);
+      // Palco do lobby fica longe da área de treino (z = 300)
+      const STAGE = new THREE.Vector3(0, 0, 300);
+
+      const lobbySpot = new THREE.PointLight(0xffe8b0, 0.65, 16);
+      lobbySpot.position.set(STAGE.x + 0.3, 3.2, STAGE.z + 2.2);
       scene.add(lobbySpot);
 
       // =========================================================
-      // 3. ARMAS LOW-POLY PROCEDURAIS (AR & SMG)
+      // 3. ARMAS LOW-POLY + BRAÇOS ROBLOX FPS (SEM GIRO 360)
       // =========================================================
       const weaponGroup = new THREE.Group();
+      const gunModelGroup = new THREE.Group();
+
       const gunMetal = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.6, flatShading: true });
       const gunTan = new THREE.MeshStandardMaterial({ color: 0xa1885f, roughness: 0.7, flatShading: true });
       const gunDark = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8, flatShading: true });
@@ -438,86 +492,132 @@
       const arMeshGroup = new THREE.Group();
       const smgMeshGroup = new THREE.Group();
 
-      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.095, 0.42), gunTan);
+      const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.066, 0.082, 0.35), gunTan);
       arMeshGroup.add(receiver);
 
-      const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.075, 0.34), gunMetal);
-      handguard.position.set(0, 0.008, -0.36);
+      const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.066, 0.27), gunMetal);
+      handguard.position.set(0, 0.006, -0.30);
       arMeshGroup.add(handguard);
 
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.24, 6), gunDark);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.19, 6), gunDark);
       barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.012, -0.60);
+      barrel.position.set(0, 0.01, -0.50);
       arMeshGroup.add(barrel);
 
-      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.11, 0.24), gunTan);
-      stock.position.set(0, -0.02, 0.30);
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.09, 0.19), gunTan);
+      stock.position.set(0, -0.018, 0.25);
       arMeshGroup.add(stock);
 
-      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.17, 0.085), gunDark);
-      mag.position.set(0, -0.11, -0.07);
+      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.135, 0.07), gunDark);
+      mag.position.set(0, -0.09, -0.06);
       mag.rotation.x = 0.18;
       arMeshGroup.add(mag);
 
-      const sightBase = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.022, 0.10), gunDark);
-      sightBase.position.set(0, 0.058, -0.02);
+      const sightBase = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.018, 0.085), gunDark);
+      sightBase.position.set(0, 0.048, -0.02);
       arMeshGroup.add(sightBase);
 
-      const sightLeft = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.055, 0.08), gunDark);
-      sightLeft.position.set(-0.026, 0.095, -0.02);
+      const sightLeft = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.044, 0.068), gunDark);
+      sightLeft.position.set(-0.021, 0.078, -0.02);
       arMeshGroup.add(sightLeft);
 
-      const sightRight = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.055, 0.08), gunDark);
-      sightRight.position.set(0.026, 0.095, -0.02);
+      const sightRight = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.044, 0.068), gunDark);
+      sightRight.position.set(0.021, 0.078, -0.02);
       arMeshGroup.add(sightRight);
 
-      const sightTop = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.08), gunDark);
-      sightTop.position.set(0, 0.123, -0.02);
+      const sightTop = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.006, 0.068), gunDark);
+      sightTop.position.set(0, 0.102, -0.02);
       arMeshGroup.add(sightTop);
 
       const redDot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.0024, 8, 8),
+        new THREE.SphereGeometry(0.002, 8, 8),
         new THREE.MeshBasicMaterial({ color: 0xef4444 })
       );
-      redDot.position.set(0, 0.095, -0.02);
+      redDot.position.set(0, 0.078, -0.02);
       arMeshGroup.add(redDot);
 
-      const smgBody = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.085, 0.30), gunDark);
+      const smgBody = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.074, 0.25), gunDark);
       smgMeshGroup.add(smgBody);
 
-      const smgShroud = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.065, 0.18), gunMetal);
-      smgShroud.position.set(0, 0.005, -0.22);
+      const smgShroud = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.056, 0.14), gunMetal);
+      smgShroud.position.set(0, 0.005, -0.18);
       smgMeshGroup.add(smgShroud);
 
-      const smgMag = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.20, 0.055), gunMetal);
-      smgMag.position.set(0, -0.12, -0.09);
+      const smgMag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.16, 0.046), gunMetal);
+      smgMag.position.set(0, -0.10, -0.07);
       smgMag.rotation.x = -0.12;
       smgMeshGroup.add(smgMag);
 
-      const smgSight = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.04, 0.07), gunTan);
-      smgSight.position.set(0, 0.06, -0.02);
+      const smgSight = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.032, 0.058), gunTan);
+      smgSight.position.set(0, 0.05, -0.02);
       smgMeshGroup.add(smgSight);
 
       smgMeshGroup.visible = false;
 
-      weaponGroup.add(arMeshGroup);
-      weaponGroup.add(smgMeshGroup);
+      gunModelGroup.add(arMeshGroup);
+      gunModelGroup.add(smgMeshGroup);
 
       const muzzleFlash = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.075, 0),
+        new THREE.OctahedronGeometry(0.05, 0),
         new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.9 })
       );
-      muzzleFlash.position.set(0, 0.012, -0.74);
+      muzzleFlash.position.set(0, 0.01, -0.60);
       muzzleFlash.visible = false;
-      weaponGroup.add(muzzleFlash);
+      gunModelGroup.add(muzzleFlash);
 
-      const hipPos = new THREE.Vector3(0.24, -0.21, -0.42);
-      const adsPos = new THREE.Vector3(0.0, -0.095, -0.26);
+      weaponGroup.add(gunModelGroup);
+
+      const rbxSleeveMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.72, flatShading: true });
+      const rbxCuffMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.65, flatShading: true });
+      const rbxHandMat = new THREE.MeshStandardMaterial({ color: 0xf4c27a, roughness: 0.65, flatShading: true });
+
+      const rbxArmsGroup = new THREE.Group();
+
+      const rightArmPivot = new THREE.Group();
+      rightArmPivot.position.set(0.045, -0.065, 0.10);
+      rightArmPivot.rotation.set(0.18, -0.10, 0.03);
+
+      const rightArmBlock = new THREE.Mesh(new THREE.BoxGeometry(0.064, 0.064, 0.22), rbxSleeveMat);
+      rightArmBlock.position.set(0, -0.015, -0.09);
+      rightArmPivot.add(rightArmBlock);
+
+      const rightCuff = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.068, 0.024), rbxCuffMat);
+      rightCuff.position.set(0, -0.012, -0.205);
+      rightArmPivot.add(rightCuff);
+
+      const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.05), rbxHandMat);
+      rightHand.position.set(0, -0.008, -0.235);
+      rightArmPivot.add(rightHand);
+
+      rbxArmsGroup.add(rightArmPivot);
+
+      const leftArmPivot = new THREE.Group();
+      leftArmPivot.position.set(-0.045, -0.072, -0.04);
+      leftArmPivot.rotation.set(0.20, 0.14, -0.04);
+
+      const leftArmBlock = new THREE.Mesh(new THREE.BoxGeometry(0.064, 0.064, 0.22), rbxSleeveMat);
+      leftArmBlock.position.set(0, -0.015, -0.09);
+      leftArmPivot.add(leftArmBlock);
+
+      const leftCuff = new THREE.Mesh(new THREE.BoxGeometry(0.068, 0.068, 0.024), rbxCuffMat);
+      leftCuff.position.set(0, -0.012, -0.205);
+      leftArmPivot.add(leftCuff);
+
+      const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.05), rbxHandMat);
+      leftHand.position.set(0, 0.012, -0.21);
+      leftArmPivot.add(leftHand);
+
+      rbxArmsGroup.add(leftArmPivot);
+
+      weaponGroup.add(rbxArmsGroup);
+
+      const hipPos = new THREE.Vector3(0.20, -0.18, -0.37);
+      const adsPos = new THREE.Vector3(0.0, -0.08, -0.25);
       weaponGroup.position.copy(hipPos);
       camera.add(weaponGroup);
 
       // =========================================================
-      // OPERADOR LOW-POLY (LOBBY & JOGADORES REMOTOS)
+      // OPERADOR LOW-POLY (LOBBY & JOGADORES REMOTOS COM ANIMAÇÃO)
       // =========================================================
       function buildOperatorRig(visorColorHex = 0x38bdf8, vestColorHex = 0x3f4e3a) {
         const root = new THREE.Group();
@@ -526,15 +626,21 @@
         const helmetMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, flatShading: true });
         const visorMat = new THREE.MeshStandardMaterial({ color: visorColorHex, roughness: 0.2, metalness: 0.4, flatShading: true });
 
+        const legLPivot = new THREE.Group();
+        legLPivot.position.set(-0.15, 0.85, 0);
         const legL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.85, 0.24), suitMat);
-        legL.position.set(-0.15, 0.425, 0);
+        legL.position.set(0, -0.425, 0);
         legL.castShadow = true;
-        root.add(legL);
+        legLPivot.add(legL);
+        root.add(legLPivot);
 
+        const legRPivot = new THREE.Group();
+        legRPivot.position.set(0.15, 0.85, 0);
         const legR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.85, 0.24), suitMat);
-        legR.position.set(0.15, 0.425, 0);
+        legR.position.set(0, -0.425, 0);
         legR.castShadow = true;
-        root.add(legR);
+        legRPivot.add(legR);
+        root.add(legRPivot);
 
         const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.72, 0.30), vestMat);
         torso.position.set(0, 1.21, 0);
@@ -570,16 +676,243 @@
         opGun.castShadow = true;
         root.add(opGun);
 
-        return { root, torso, headGroup };
+        return { root, torso, headGroup, legLPivot, legRPivot, armR, armL, opGun, vestMat, visorMat };
       }
 
-      const lobbyRig = buildOperatorRig(0x38bdf8, 0x3f4e3a);
+      const lobbyRig = buildOperatorRig(0x22d3ee, 0x5b7f3a);
       const lobbyOperator = lobbyRig.root;
-      lobbyOperator.position.set(0.35, 0, 11.4);
-      lobbyOperator.rotation.y = 0.25;
+      lobbyOperator.position.set(STAGE.x, 0.25, STAGE.z);
+      lobbyOperator.rotation.y = 0.12;
       scene.add(lobbyOperator);
 
-      // Jogadores remotos (Mapa peerId -> { rig, targetPos, targetYaw, targetSliding, isHitbox })
+      // ---------- ARMA NA MÃO DO OPERADOR DO LOBBY ----------
+      lobbyRig.armR.visible = false;
+      lobbyRig.armL.visible = false;
+      lobbyRig.opGun.visible = false;
+
+      const lobbyGun = new THREE.Group();
+      lobbyGun.position.set(0.04, 1.22, 0.38);
+      lobbyGun.rotation.set(0.08, 0.22, -0.05);
+      const lobbyGunAr = arMeshGroup.clone();
+      const lobbyGunSmg = smgMeshGroup.clone();
+      lobbyGunAr.visible = true;
+      lobbyGunSmg.visible = false;
+      lobbyGun.add(lobbyGunAr, lobbyGunSmg);
+      lobbyOperator.add(lobbyGun);
+
+      const lobbySleeveMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.75, flatShading: true });
+      const lobbySkinMat = new THREE.MeshStandardMaterial({ color: 0xf4c27a, roughness: 0.65, flatShading: true });
+      const lobbyArmGeo = new THREE.BoxGeometry(0.15, 0.55, 0.15);
+      const lobbyHandGeo = new THREE.BoxGeometry(0.11, 0.11, 0.11);
+      const lobbyArmR = new THREE.Mesh(lobbyArmGeo, lobbySleeveMat);
+      const lobbyArmL = new THREE.Mesh(lobbyArmGeo, lobbySleeveMat);
+      const lobbyHandR = new THREE.Mesh(lobbyHandGeo, lobbySkinMat);
+      const lobbyHandL = new THREE.Mesh(lobbyHandGeo, lobbySkinMat);
+      lobbyOperator.add(lobbyArmR, lobbyArmL, lobbyHandR, lobbyHandL);
+
+      const _limbUp = new THREE.Vector3(0, 1, 0);
+      function placeLimb(arm, hand, from, to) {
+        const dir = to.clone().sub(from);
+        const len = Math.max(0.05, dir.length());
+        arm.position.copy(from).addScaledVector(dir, 0.5);
+        arm.quaternion.setFromUnitVectors(_limbUp, dir.normalize());
+        arm.scale.set(1, len / 0.55, 1);
+        hand.position.copy(to);
+      }
+
+      function poseLobbyGun(key) {
+        const isAr = key === 'ar';
+        lobbyGunAr.visible = isAr;
+        lobbyGunSmg.visible = !isAr;
+        lobbyGun.scale.setScalar(isAr ? 1.25 : 1.45);
+        lobbyGun.updateMatrix();
+        const rGrip = (isAr ? new THREE.Vector3(0.02, -0.06, 0.04) : new THREE.Vector3(0.02, -0.06, 0.02)).applyMatrix4(lobbyGun.matrix);
+        const lGrip = (isAr ? new THREE.Vector3(-0.01, -0.02, -0.24) : new THREE.Vector3(-0.01, -0.02, -0.16)).applyMatrix4(lobbyGun.matrix);
+        placeLimb(lobbyArmR, lobbyHandR, new THREE.Vector3(0.32, 1.44, 0.04), rGrip);
+        placeLimb(lobbyArmL, lobbyHandL, new THREE.Vector3(-0.30, 1.44, 0.06), lGrip);
+      }
+      poseLobbyGun('ar');
+
+      // ---------- PALCO 3D DO LOBBY (cartoon: céu azul, deserto laranja, plataforma com estrela) ----------
+      const lobbyStage = new THREE.Group();
+      lobbyStage.position.copy(STAGE);
+      scene.add(lobbyStage);
+
+      const stMat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true, fog: false });
+      const stAdd = (geo, color, x, y, z, rx = 0, ry = 0, rz = 0) => {
+        const m = new THREE.Mesh(geo, stMat(color));
+        m.position.set(x, y, z);
+        m.rotation.set(rx, ry, rz);
+        lobbyStage.add(m);
+        return m;
+      };
+
+      const skyGeo = new THREE.SphereGeometry(140, 20, 14);
+      const skyPos = skyGeo.attributes.position;
+      const skyCols = [];
+      const skyHorizon = new THREE.Color(0x9be1ff);
+      const skyZenith = new THREE.Color(0x1565e0);
+      const skyTmp = new THREE.Color();
+      for (let i = 0; i < skyPos.count; i++) {
+        const h = clamp(skyPos.getY(i) / 140, 0, 1);
+        skyTmp.copy(skyHorizon).lerp(skyZenith, Math.pow(h, 0.55));
+        skyCols.push(skyTmp.r, skyTmp.g, skyTmp.b);
+      }
+      skyGeo.setAttribute('color', new THREE.Float32BufferAttribute(skyCols, 3));
+      lobbyStage.add(new THREE.Mesh(
+        skyGeo,
+        new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false })
+      ));
+
+      stAdd(new THREE.CircleGeometry(138, 32), 0xe0903f, 0, -0.02, 0, -Math.PI / 2);
+      stAdd(new THREE.CircleGeometry(7.5, 24), 0xeaa653, 0, -0.01, 0, -Math.PI / 2);
+
+      const mesa = (x, z, sx, sy, sz, color) => {
+        const m = stAdd(new THREE.CylinderGeometry(0.6, 1, 1, 5), color, x, sy / 2, z);
+        m.scale.set(sx, sy, sz);
+      };
+      mesa(-9, -9, 5, 9, 4, 0xc4622b);
+      mesa(-6, -12, 4, 6, 3, 0xdb7b36);
+      mesa(-13, -6, 4, 5, 4, 0xa94f24);
+      mesa(9, -10, 5, 7, 4, 0xdb7b36);
+      mesa(13, -6, 3.5, 4, 3, 0xc4622b);
+      mesa(5, -13, 4, 4, 3, 0x6b7a99);
+      mesa(-1, -16, 5, 3, 3, 0x6b7a99);
+
+      [[-2.1, 0.25, 1.2, 0.9, 0.7, 0.8], [2.2, 0.25, 1.1, 1.0, 0.75, 0.9]].forEach((r) => {
+        const m = stAdd(new THREE.DodecahedronGeometry(1, 0), 0x3b4458, r[0], r[1], r[2]);
+        m.scale.set(r[3], r[4], r[5]);
+      });
+
+      const crate = (x, z, ry, y = 0) => {
+        const g = new THREE.Group();
+        g.position.set(x, y, z);
+        g.rotation.y = ry;
+        const b = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.7), stMat(0x55703a));
+        b.position.y = 0.25;
+        g.add(b);
+        [-0.3, 0.3].forEach((sx) => {
+          const strap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.52, 0.72), stMat(0xd98e3a));
+          strap.position.set(sx, 0.26, 0);
+          g.add(strap);
+        });
+        lobbyStage.add(g);
+      };
+      crate(-3.5, -0.9, 0.3);
+      crate(-3.0, -0.2, -0.2);
+      crate(-3.4, -0.85, 0.15, 0.5);
+
+      const barrier = (x, z, ry) => {
+        const g = new THREE.Group();
+        g.position.set(x, 0, z);
+        g.rotation.y = ry;
+        const b = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.55, 0.32), stMat(0xb8bec9));
+        b.position.y = 0.275;
+        g.add(b);
+        [-0.4, 0.4].forEach((sx) => {
+          const t = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.18, 0.32), stMat(0xb8bec9));
+          t.position.set(sx, 0.64, 0);
+          g.add(t);
+        });
+        lobbyStage.add(g);
+      };
+      barrier(-1.9, -1.9, 0.25);
+      barrier(3.4, -1.8, -0.3);
+
+      stAdd(new THREE.BoxGeometry(0.08, 1.0, 0.08), 0x8b5a2b, -0.8, 0.5, -2.3, 0, 0, 0.7);
+      stAdd(new THREE.BoxGeometry(0.08, 1.0, 0.08), 0x8b5a2b, -0.8, 0.5, -2.3, 0, 0, -0.7);
+      stAdd(new THREE.BoxGeometry(1.0, 0.07, 0.07), 0x8b5a2b, -0.8, 0.35, -2.3);
+
+      stAdd(new THREE.BoxGeometry(1.1, 0.3, 0.12), 0xf5c518, 1.9, 0.75, -2.0);
+      [-0.38, 0, 0.38].forEach((sx) => stAdd(new THREE.BoxGeometry(0.14, 0.3, 0.125), 0x1f2937, 1.9 + sx, 0.75, -2.0));
+      stAdd(new THREE.BoxGeometry(0.08, 0.7, 0.08), 0x1f2937, 1.5, 0.35, -2.0);
+      stAdd(new THREE.BoxGeometry(0.08, 0.7, 0.08), 0x1f2937, 2.3, 0.35, -2.0);
+
+      stAdd(new THREE.BoxGeometry(0.06, 1.0, 0.06), 0x374151, 2.7, 0.5, -0.6);
+      stAdd(new THREE.BoxGeometry(0.4, 0.05, 0.3), 0x374151, 2.7, 0.025, -0.6);
+      [[0.4, 0xf8fafc], [0.3, 0xef4444], [0.2, 0xf8fafc], [0.1, 0xef4444]].forEach((ring, k) => {
+        stAdd(new THREE.CylinderGeometry(ring[0], ring[0], 0.04, 16), ring[1], 2.7, 1.15, -0.55 + k * 0.012, Math.PI / 2, 0, 0);
+      });
+
+      stAdd(new THREE.CylinderGeometry(0.04, 0.04, 1.4, 6), 0x6b4423, -2.5, 0.7, -0.5);
+      stAdd(new THREE.BoxGeometry(0.5, 0.55, 0.04), 0xf59e0b, -2.25, 1.05, -0.5);
+      stAdd(new THREE.OctahedronGeometry(0.1, 0), 0xfef08a, -2.25, 1.05, -0.46);
+      stAdd(new THREE.BoxGeometry(0.3, 0.1, 0.3), 0x6b4423, -2.5, 0.05, -0.5);
+
+      stAdd(new THREE.CylinderGeometry(1.55, 1.75, 0.22, 8), 0x4b5a75, 0, 0.11, 0, 0, Math.PI / 8, 0);
+      stAdd(new THREE.CylinderGeometry(1.3, 1.3, 0.02, 8), 0x6b7a99, 0, 0.23, 0, 0, Math.PI / 8, 0);
+
+      const starShape = new THREE.Shape();
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? 1.05 : 0.45;
+        const a = Math.PI / 2 + i * Math.PI / 5;
+        if (i === 0) starShape.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else starShape.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      starShape.closePath();
+      const platformStar = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(starShape, { depth: 0.03, bevelEnabled: false }),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24, fog: false })
+      );
+      platformStar.rotation.x = -Math.PI / 2;
+      platformStar.position.y = 0.245;
+      lobbyStage.add(platformStar);
+
+      const platformRim = new THREE.Mesh(
+        new THREE.TorusGeometry(1.32, 0.035, 4, 8),
+        new THREE.MeshBasicMaterial({ color: 0xfde047, fog: false })
+      );
+      platformRim.rotation.set(Math.PI / 2, 0, Math.PI / 8);
+      platformRim.position.y = 0.25;
+      lobbyStage.add(platformRim);
+
+      const lobbyRing = new THREE.Mesh(
+        new THREE.TorusGeometry(2.3, 0.06, 4, 8),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24, fog: false })
+      );
+      lobbyRing.rotation.x = -Math.PI / 2;
+      lobbyRing.position.y = 0.03;
+      lobbyStage.add(lobbyRing);
+
+      const blobShadow = new THREE.Mesh(
+        new THREE.CircleGeometry(0.7, 12),
+        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false })
+      );
+      blobShadow.rotation.x = -Math.PI / 2;
+      blobShadow.position.y = 0.26;
+      lobbyStage.add(blobShadow);
+
+      const lobbyParticles = [];
+      const medalGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.05, 6);
+      const medalInnerGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.07, 6);
+      const sparkGeo = new THREE.OctahedronGeometry(0.09, 0);
+      [
+        [-1.6, 1.9, -0.3, 'spark'], [1.5, 2.2, -0.2, 'medal'], [-1.3, 1.2, 0.4, 'medal'],
+        [1.2, 2.7, 0.3, 'spark'], [-0.7, 2.8, -0.6, 'spark'], [1.7, 1.2, 0.5, 'spark']
+      ].forEach((f, k) => {
+        const g = new THREE.Group();
+        if (f[3] === 'medal') {
+          const m1 = new THREE.Mesh(medalGeo, new THREE.MeshBasicMaterial({ color: 0xfbbf24, fog: false }));
+          const m2 = new THREE.Mesh(medalInnerGeo, new THREE.MeshBasicMaterial({ color: 0xf97316, fog: false }));
+          m1.rotation.x = m2.rotation.x = Math.PI / 2;
+          g.add(m1, m2);
+        } else {
+          const sp = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ color: 0xfde047, fog: false }));
+          sp.scale.set(0.7, 1.6, 0.7);
+          g.add(sp);
+        }
+        g.position.set(f[0], f[1], f[2]);
+        g.userData = { baseY: f[1], phase: k * 1.3, spin: f[3] === 'medal' ? 1.4 : 2.2 };
+        lobbyStage.add(g);
+        lobbyParticles.push(g);
+      });
+
+      function setLobbyLighting(on) {
+        hemiLight.intensity = on ? 0.7 : 0.75;
+        dirLight.intensity = on ? 0.75 : 1.15;
+      }
+      setLobbyLighting(true);
+
       const remotePlayers = new Map();
       const shootableMeshes = [];
 
@@ -588,7 +921,6 @@
         const built = buildOperatorRig(0xfbbf24, 0x7c2d12);
         scene.add(built.root);
 
-        // Hitboxes para acertar o jogador online
         built.torso.userData = { remotePeerId: peerId, isHead: false };
         built.headGroup.children[0].userData = { remotePeerId: peerId, isHead: true };
         shootableMeshes.push(built.torso, built.headGroup.children[0]);
@@ -598,7 +930,8 @@
           rig: built,
           targetPos: new THREE.Vector3(0, 0, 10),
           targetYaw: 0,
-          targetSliding: false
+          targetSliding: false,
+          animPhase: 0
         };
         remotePlayers.set(peerId, entry);
         updateRoomUI();
@@ -772,6 +1105,10 @@
       let slideCooldown = 0;
       const slideDir = new THREE.Vector3();
 
+      let walkBobPhase = 0;
+      const RELOAD_DURATION = 1.25;
+      let reloadElapsed = 0;
+
       const WEAPONS = {
         ar: {
           name: 'TAC-AR556',
@@ -822,7 +1159,6 @@
       let fireCooldown = 0;
       let magAmmo = WEAPONS.ar.magSize;
       let isReloading = false;
-      let reloadTimer = 0;
       let recoilOffset = 0;
       let muzzleTimer = 0;
 
@@ -858,7 +1194,7 @@
       let peer = null;
       let roomCode = '';
       let isHost = false;
-      const connections = new Map(); // remotePeerId -> DataConnection
+      const connections = new Map();
       let netSendTimer = 0;
 
       const roomFeedbackEl = document.getElementById('room-feedback');
@@ -886,6 +1222,7 @@
 
       function updateRoomUI() {
         const totalPlayers = 1 + remotePlayers.size;
+        renderSquad();
         if (!roomCode) {
           netStatusTextEl.textContent = 'LOCAL';
           roomPlayersBadgeEl.textContent = 'OFFLINE';
@@ -968,6 +1305,7 @@
         roomCode = '';
         isHost = false;
         roomCodeBoxEl.classList.add('hidden');
+        roomCodeBoxEl.classList.remove('flex');
         updateRoomUI();
         setRoomFeedback('Desconectado da sala online.');
       }
@@ -989,6 +1327,7 @@
           isHost = true;
           roomCodeDisplayEl.textContent = code;
           roomCodeBoxEl.classList.remove('hidden');
+          roomCodeBoxEl.classList.add('flex');
           updateRoomUI();
           setRoomFeedback('Sala criada! Compartilhe o código.');
         });
@@ -1025,6 +1364,7 @@
           isHost = false;
           roomCodeDisplayEl.textContent = code;
           roomCodeBoxEl.classList.remove('hidden');
+          roomCodeBoxEl.classList.add('flex');
           updateRoomUI();
 
           const conn = p.connect(ROOM_PREFIX + code, { reliable: true });
@@ -1060,11 +1400,13 @@
         const cfg = WEAPONS[wKey];
         magAmmo = cfg.magSize;
         isReloading = false;
+        reloadElapsed = 0;
         document.getElementById('lobby-weapon-tag').textContent = cfg.tag;
 
         arMeshGroup.visible = (wKey === 'ar');
         smgMeshGroup.visible = (wKey === 'smg');
-        muzzleFlash.position.z = (wKey === 'ar') ? -0.74 : -0.42;
+        muzzleFlash.position.z = (wKey === 'ar') ? -0.60 : -0.35;
+        poseLobbyGun(wKey);
 
         document.querySelectorAll('.weapon-btn').forEach((btn) => {
           const active = btn.dataset.weapon === wKey;
@@ -1082,31 +1424,35 @@
         });
       });
 
-      document.querySelectorAll('.mode-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          initAudio();
-          currentModeKey = btn.dataset.mode;
-          const m = MODES[currentModeKey];
-          document.getElementById('lobby-mode-title').textContent = m.title;
-          document.getElementById('lobby-mode-desc').textContent = m.desc;
-
-          document.querySelectorAll('.mode-btn').forEach((b) => {
-            const active = b.dataset.mode === currentModeKey;
-            b.classList.toggle('border-amber-400', active);
-            b.classList.toggle('bg-amber-400/20', active);
-            b.classList.toggle('text-amber-300', active);
-            b.classList.toggle('border-white/15', !active);
-            b.classList.toggle('bg-slate-900/70', !active);
-            b.classList.toggle('text-slate-300', !active);
-          });
-        });
+      function setMode(key) {
+        currentModeKey = key;
+        document.getElementById('lobby-mode-title').textContent = MODES[key].title;
+        document.getElementById('mode-card').title = MODES[key].desc;
+      }
+      document.getElementById('mode-card').addEventListener('click', () => {
+        initAudio();
+        const modeKeys = Object.keys(MODES);
+        setMode(modeKeys[(modeKeys.indexOf(currentModeKey) + 1) % modeKeys.length]);
       });
+
+      function resetWeaponTransforms() {
+        isReloading = false;
+        reloadElapsed = 0;
+        recoilOffset = 0;
+        weaponGroup.position.copy(hipPos);
+        weaponGroup.rotation.set(0, 0, 0);
+        gunModelGroup.position.set(0, 0, 0);
+        gunModelGroup.rotation.set(0, 0, 0);
+        rightArmPivot.position.set(0.045, -0.065, 0.10);
+        rightArmPivot.rotation.set(0.18, -0.10, 0.03);
+        leftArmPivot.position.set(-0.045, -0.072, -0.04);
+        leftArmPivot.rotation.set(0.20, 0.14, -0.04);
+      }
 
       function enterMatch() {
         initAudio();
         const mode = MODES[currentModeKey];
         playerPos.copy(mode.spawn);
-        // Em sala multiplayer, desloca levemente para não nascer no mesmo ponto exato
         if (remotePlayers.size > 0) {
           playerPos.x += (isHost ? -1.4 : 1.4);
         }
@@ -1118,12 +1464,19 @@
         isADS = false;
         isFiring = false;
         currentEye = standingEye;
+        resetWeaponTransforms();
 
         inLobby = false;
         isPaused = false;
         gameActive = true;
 
         lobbyOperator.visible = false;
+        lobbyStage.visible = false;
+        lobbySpot.visible = false;
+        camera.clearViewOffset();
+        setLobbyLighting(false);
+        profile.matches++;
+        saveProfile();
         weaponGroup.visible = true;
         lobbyEl.classList.add('hidden');
         pauseOverlayEl.classList.add('hidden');
@@ -1142,6 +1495,7 @@
       function returnToLobby() {
         isFiring = false;
         isADS = false;
+        resetWeaponTransforms();
         inLobby = true;
         isPaused = false;
         gameActive = false;
@@ -1157,6 +1511,10 @@
         lobbyEl.classList.remove('hidden');
 
         lobbyOperator.visible = true;
+        lobbyStage.visible = true;
+        lobbySpot.visible = true;
+        setLobbyLighting(true);
+        refreshProfileUI();
         weaponGroup.visible = false;
         updateRoomUI();
       }
@@ -1191,8 +1549,8 @@
       document.getElementById('back-lobby-btn').addEventListener('click', returnToLobby);
       document.getElementById('hud-lobby-btn').addEventListener('click', returnToLobby);
 
-      lobbyEl.addEventListener('mousedown', (e) => {
-        if (e.target.closest('button, input')) return;
+      renderer.domElement.addEventListener('mousedown', (e) => {
+        if (!inLobby || e.button !== 0) return;
         lobbyDragActive = true;
         lobbyLastX = e.clientX;
       });
@@ -1206,7 +1564,7 @@
         const sens = isADS ? 0.0013 : 0.0022;
         yaw -= (e.movementX || 0) * sens;
         pitch -= (e.movementY || 0) * sens;
-        pitch = Math.max(-1.45, Math.min(1.45, pitch));
+        pitch = clamp(pitch, -1.45, 1.45);
       });
       window.addEventListener('mouseup', () => {
         lobbyDragActive = false;
@@ -1216,18 +1574,18 @@
         }
       });
 
-      lobbyEl.addEventListener('touchstart', (e) => {
-        if (e.target.closest('button, input')) return;
+      renderer.domElement.addEventListener('touchstart', (e) => {
+        if (!inLobby || !e.touches.length) return;
         lobbyDragActive = true;
         lobbyLastX = e.touches[0].clientX;
       }, { passive: true });
-      lobbyEl.addEventListener('touchmove', (e) => {
-        if (!inLobby || !lobbyDragActive) return;
+      renderer.domElement.addEventListener('touchmove', (e) => {
+        if (!inLobby || !lobbyDragActive || !e.touches.length) return;
         const dx = e.touches[0].clientX - lobbyLastX;
         lobbyLastX = e.touches[0].clientX;
         lobbyOperator.rotation.y += dx * 0.012;
       }, { passive: true });
-      lobbyEl.addEventListener('touchend', () => { lobbyDragActive = false; });
+      window.addEventListener('touchend', () => { lobbyDragActive = false; });
 
       document.addEventListener('pointerlockchange', () => {
         if (isTouchDevice || inLobby) return;
@@ -1281,7 +1639,6 @@
           }
         }
 
-        // Também considera jogadores remotos no multiplayer
         remotePlayers.forEach((rp) => {
           rp.rig.torso.getWorldPosition(_aimTargetWorld);
           _aimTargetWorld.y += 0.22;
@@ -1314,7 +1671,7 @@
         const strength = isADS ? (isFiring ? 7.5 : 5.2) : (isFiring ? 4.4 : (isUserLooking ? 1.4 : 2.3));
         const factor = Math.min(1, strength * dt);
         yaw += bestYaw * factor;
-        pitch = Math.max(-1.45, Math.min(1.45, pitch + bestPitch * factor));
+        pitch = clamp(pitch + bestPitch * factor, -1.45, 1.45);
       }
 
       // =========================================================
@@ -1396,7 +1753,7 @@
           const lookSpeed = isADS ? 1.85 : 2.95;
           yaw -= rx * lookSpeed * dt;
           pitch -= ry * lookSpeed * dt;
-          pitch = Math.max(-1.45, Math.min(1.45, pitch));
+          pitch = clamp(pitch, -1.45, 1.45);
         }
 
         if (btnA && !gpState.prevJump) triggerJump();
@@ -1505,7 +1862,7 @@
             const sens = isADS ? 0.0032 : 0.0052;
             yaw -= dx * sens;
             pitch -= dy * sens;
-            pitch = Math.max(-1.45, Math.min(1.45, pitch));
+            pitch = clamp(pitch, -1.45, 1.45);
             break;
           }
         }
@@ -1556,7 +1913,7 @@
             const sens = isADS ? 0.0032 : 0.0052;
             yaw -= dx * sens;
             pitch -= dy * sens;
-            pitch = Math.max(-1.45, Math.min(1.45, pitch));
+            pitch = clamp(pitch, -1.45, 1.45);
           }
         }
       }, { passive: false });
@@ -1638,7 +1995,7 @@
       window.addEventListener('contextmenu', (e) => e.preventDefault());
 
       window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.aspect = window.innerWidth / Math.max(1, window.innerHeight);
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
@@ -1669,7 +2026,7 @@
 
       function startReload() {
         isReloading = true;
-        reloadTimer = 1.25;
+        reloadElapsed = 0;
       }
 
       // =========================================================
@@ -1704,8 +2061,8 @@
 
         magAmmo--;
         fireCooldown = wCfg.fireInterval;
-        recoilOffset = isADS ? 0.022 : 0.042;
-        pitch = Math.min(1.45, pitch + (isADS ? 0.011 : 0.020));
+        recoilOffset = isADS ? 0.02 : 0.036;
+        pitch = clamp(pitch + (isADS ? 0.011 : 0.020), -1.45, 1.45);
         yaw += (Math.random() - 0.5) * (isADS ? 0.005 : 0.014);
 
         muzzleFlash.visible = true;
@@ -1745,6 +2102,7 @@
               target.down = true;
               target.respawnTimer = 2.4;
               target.group.rotation.x = Math.PI / 2;
+              registerKill(isHead);
             }
           } else if (remotePeerId) {
             playHitSound(isHead);
@@ -1790,7 +2148,150 @@
       }
 
       // =========================================================
-      // 8. GAME LOOP PRINCIPAL
+      // LOBBY: ABAS, PERFIL / XP, UNIFORMES E ESQUADRÃO
+      // =========================================================
+      const byId = (id) => document.getElementById(id);
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      const SKINS = [
+        { name: 'AZUL TÁTICO', visor: 0x22d3ee, vest: 0x5b7f3a },
+        { name: 'ÂMBAR', visor: 0xfbbf24, vest: 0x7c2d12 },
+        { name: 'ESMERALDA', visor: 0x34d399, vest: 0x14532d },
+        { name: 'ROSA', visor: 0xf43f5e, vest: 0x4c1d3a },
+        { name: 'FANTASMA', visor: 0xe2e8f0, vest: 0x1f2937 }
+      ];
+      const hexStr = (n) => '#' + n.toString(16).padStart(6, '0');
+
+      const PROFILE_KEY = 'nexuswz_profile_v1';
+      const profile = { name: 'OPERADOR', skin: 0, xp: 0, kills: 0, heads: 0, matches: 0 };
+      try { Object.assign(profile, JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')); } catch (e) {}
+      if (!SKINS[profile.skin]) profile.skin = 0;
+
+      function saveProfile() {
+        try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) {}
+      }
+
+      function registerKill(isHead) {
+        profile.kills++;
+        if (isHead) profile.heads++;
+        profile.xp += isHead ? 15 : 10;
+        saveProfile();
+      }
+
+      function levelInfo() {
+        let lvl = 1, need = 100, xp = profile.xp;
+        while (xp >= need) { xp -= need; lvl++; need = 100 + lvl * 25; }
+        return { lvl, xp, need };
+      }
+
+      function refreshProfileUI() {
+        const li = levelInfo();
+        byId('pl-level').textContent = li.lvl;
+        byId('pl-name').textContent = profile.name;
+        byId('pl-xp-bar').style.width = Math.round((li.xp / li.need) * 100) + '%';
+        byId('st-kills').textContent = profile.kills;
+        byId('st-heads').textContent = profile.heads;
+        byId('st-matches').textContent = profile.matches;
+      }
+
+      let currentTab = 'play';
+      function showTab(name) {
+        currentTab = name;
+        document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== name));
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('tab-active', b.dataset.tab === name));
+        byId('side-panel').classList.toggle('hidden', name === 'play');
+      }
+      document.querySelectorAll('.tab-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          initAudio();
+          showTab(b.dataset.tab === currentTab ? 'play' : b.dataset.tab);
+        });
+      });
+
+      function applySkin(i) {
+        profile.skin = i;
+        const s = SKINS[i];
+        lobbyRig.visorMat.color.setHex(s.visor);
+        lobbyRig.vestMat.color.setHex(s.vest);
+        byId('skin-name').textContent = s.name;
+        document.querySelectorAll('.skin-btn').forEach((b) => {
+          const on = Number(b.dataset.skin) === i;
+          b.classList.toggle('ring-2', on);
+          b.classList.toggle('ring-amber-400', on);
+          b.classList.toggle('opacity-60', !on);
+        });
+        saveProfile();
+      }
+
+      SKINS.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.dataset.skin = i;
+        b.className = 'skin-btn h-8 w-8 rounded border border-white/20 transition';
+        b.style.background = `linear-gradient(135deg, ${hexStr(s.vest)} 50%, ${hexStr(s.visor)} 50%)`;
+        b.setAttribute('aria-label', s.name);
+        b.addEventListener('click', () => { initAudio(); applySkin(i); });
+        byId('skin-list').appendChild(b);
+      });
+
+      const callsignInput = byId('callsign-input');
+      callsignInput.value = profile.name === 'OPERADOR' ? '' : profile.name;
+      callsignInput.addEventListener('input', () => {
+        profile.name = (callsignInput.value || '').toUpperCase().trim().slice(0, 12) || 'OPERADOR';
+        byId('pl-name').textContent = profile.name;
+        renderSquad();
+        saveProfile();
+      });
+
+      const crownSvg = '<svg viewBox="0 0 24 16" class="ml-auto h-3.5 w-5 text-amber-300"><path d="M2 14 L0 3 L7 8 L12 0 L17 8 L24 3 L22 14Z" fill="currentColor"/></svg>';
+      function renderSquad() {
+        const list = byId('squad-list');
+        if (!list) return;
+        const others = [];
+        remotePlayers.forEach((rp, id) => others.push('JOGADOR ' + id.slice(-4).toUpperCase()));
+        let html = `<div class="flex items-center gap-2 rounded-xl border-2 border-sky-300/50 bg-sky-400/15 px-2 py-1">` +
+          `<span class="sq-ico grid h-6 w-6 shrink-0 place-items-center rounded-md bg-slate-800"><span class="h-1.5 w-3.5 rounded-sm" style="background:#22d3ee"></span></span>` +
+          `<span class="truncate text-xs font-black text-white">VOCÊ</span>${crownSvg}</div>`;
+        for (let i = 0; i < 3; i++) {
+          const n = others[i];
+          if (n) {
+            html += `<div class="flex items-center gap-2 rounded-xl border-2 border-emerald-400/50 bg-emerald-500/15 px-2 py-1">` +
+              `<span class="sq-ico grid h-6 w-6 shrink-0 place-items-center rounded-md bg-slate-800"><span class="h-1.5 w-3.5 rounded-sm" style="background:#fbbf24"></span></span>` +
+              `<span class="truncate text-xs font-black text-white">${esc(n)}</span>` +
+              `<span class="ml-auto text-[9px] font-black text-emerald-300">PRONTO</span></div>`;
+          } else {
+            const first = i === others.length;
+            html += `<button data-invite class="flex w-full items-center gap-2 rounded-xl border-2 border-dashed ${first ? 'border-white/30 bg-white/5' : 'border-white/15'} px-2 py-1 text-left">` +
+              `<span class="sq-ico grid h-6 w-6 shrink-0 place-items-center rounded-md ${first ? 'bg-amber-400 text-slate-900' : 'bg-slate-700 text-slate-400'} text-sm font-black leading-none">+</span>` +
+              `<span class="text-xs font-black ${first ? 'text-white' : 'text-slate-400'}">CONVIDAR</span></button>`;
+          }
+        }
+        list.innerHTML = html;
+        byId('squad-count').textContent = (1 + Math.min(others.length, 3)) + '/4';
+      }
+
+      byId('squad-list').addEventListener('click', (e) => {
+        if (e.target.closest('[data-invite]')) {
+          initAudio();
+          showTab('net');
+        }
+      });
+
+      let lastSummary = '';
+      function updateLoadoutSummary() {
+        const s = `${WEAPONS[currentWeaponKey].name}  •  ${MODES[currentModeKey].title}`;
+        if (s !== lastSummary) {
+          lastSummary = s;
+          byId('lobby-summary').textContent = s;
+        }
+      }
+
+      showTab('play');
+      applySkin(profile.skin);
+      refreshProfileUI();
+      renderSquad();
+
+      // =========================================================
+      // 8. GAME LOOP PRINCIPAL + ENQUADRAMENTO CORRIGIDO DO LOBBY
       // =========================================================
       const clock = new THREE.Clock();
       weaponGroup.visible = false;
@@ -1802,10 +2303,22 @@
 
         pollGamepad(dt);
 
-        // Interpolar jogadores remotos na cena 3D
         remotePlayers.forEach((rp) => {
+          const prevX = rp.rig.root.position.x;
+          const prevZ = rp.rig.root.position.z;
           rp.rig.root.position.lerp(rp.targetPos, Math.min(1, dt * 16));
           rp.rig.root.rotation.y = rp.targetYaw;
+
+          const movedDist = Math.hypot(rp.rig.root.position.x - prevX, rp.rig.root.position.z - prevZ);
+          if (movedDist > 0.002 && !rp.targetSliding) {
+            rp.animPhase += dt * 12;
+            rp.rig.legLPivot.rotation.x = clamp(Math.sin(rp.animPhase) * 0.65, -0.75, 0.75);
+            rp.rig.legRPivot.rotation.x = clamp(-Math.sin(rp.animPhase) * 0.65, -0.75, 0.75);
+          } else {
+            rp.rig.legLPivot.rotation.x *= Math.pow(0.05, dt);
+            rp.rig.legRPivot.rotation.x *= Math.pow(0.05, dt);
+          }
+
           const targetTilt = rp.targetSliding ? -0.45 : 0;
           rp.rig.torso.rotation.x += (targetTilt - rp.rig.torso.rotation.x) * Math.min(1, dt * 14);
           rp.rig.root.position.y = rp.targetSliding ? -0.35 : 0;
@@ -1835,14 +2348,38 @@
         }
 
         if (inLobby) {
-          const isNarrow = window.innerWidth < 1024;
-          camera.position.set(isNarrow ? 0.35 : 0.25, 1.32, isNarrow ? 15.6 : 14.8);
-          camera.lookAt(isNarrow ? 0.35 : 0.15, 1.05, 11.4);
-          camera.fov += (58 - camera.fov) * Math.min(1, dt * 8);
+          camera.clearViewOffset();
+          const sway = Math.sin(elapsed * 0.25) * 0.10;
+          const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+
+          // Enquadra toda a altura do personagem + plataforma sem cortar fundo nem topo
+          const targetFov = aspect < 0.8 ? 64 : (aspect < 1.35 ? 55 : 52);
+          camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 12);
           camera.updateProjectionMatrix();
 
-          lobbyRig.torso.position.y = 1.21 + Math.sin(elapsed * 2.2) * 0.012;
-          lobbyRig.headGroup.position.y = 1.76 + Math.sin(elapsed * 2.2) * 0.012;
+          const halfFovRad = THREE.MathUtils.degToRad(camera.fov * 0.5);
+          const desiredHeight = 3.55;
+          const dist = clamp(desiredHeight / (2 * Math.tan(halfFovRad)), 4.1, 7.8);
+
+          // Desloca o foco horizontal para compensar os painéis laterais e manter o palco bem equilibrado
+          const sideOpen = !byId('side-panel').classList.contains('hidden');
+          const focusX = aspect >= 1.0 ? (sideOpen ? -0.25 : 0.65) : 0;
+
+          camera.position.set(STAGE.x + sway + focusX * 0.45, 1.52, STAGE.z + dist);
+          camera.lookAt(STAGE.x + focusX, 1.24, STAGE.z);
+
+          lobbyRing.rotation.z += dt * 0.5;
+          for (let i = 0; i < lobbyParticles.length; i++) {
+            const p = lobbyParticles[i];
+            p.position.y = p.userData.baseY + Math.sin(elapsed * 1.6 + p.userData.phase) * 0.12;
+            p.rotation.y += dt * p.userData.spin;
+          }
+          updateLoadoutSummary();
+
+          const breath = Math.sin(elapsed * 2.2);
+          lobbyRig.torso.position.y = 1.21 + breath * 0.012;
+          lobbyRig.headGroup.position.y = 1.76 + breath * 0.012;
+          lobbyRig.headGroup.rotation.y = clamp(Math.sin(elapsed * 1.1) * 0.08, -0.15, 0.15);
         } else if (gameActive) {
           const wCfg = WEAPONS[currentWeaponKey];
 
@@ -1853,11 +2390,16 @@
             if (muzzleTimer <= 0) muzzleFlash.visible = false;
           }
 
+          let reloadWave = 0;
           if (isReloading) {
-            reloadTimer -= dt;
-            if (reloadTimer <= 0) {
+            reloadElapsed += dt;
+            const norm = clamp(reloadElapsed / RELOAD_DURATION, 0, 1);
+            reloadWave = Math.sin(norm * Math.PI);
+            if (reloadElapsed >= RELOAD_DURATION) {
               magAmmo = wCfg.magSize;
               isReloading = false;
+              reloadElapsed = 0;
+              reloadWave = 0;
             }
           }
 
@@ -1898,9 +2440,20 @@
             isGrounded = true;
           }
 
+          const horizSpeed = horizVel.length();
+          if (isGrounded && !isSliding && horizSpeed > 0.2) {
+            walkBobPhase += dt * (isSprinting ? 12 : 8.5);
+          } else {
+            walkBobPhase += dt * 2.0;
+          }
+
+          const bobAmp = isSliding ? 0.002 : (isADS ? 0.002 : (horizSpeed > 0.2 ? (isSprinting ? 0.012 : 0.007) : 0.0015));
+          const bobX = Math.cos(walkBobPhase * 0.5) * bobAmp;
+          const bobY = Math.abs(Math.sin(walkBobPhase)) * bobAmp;
+
           const targetEye = isSliding ? slideEye : standingEye;
           currentEye += (targetEye - currentEye) * Math.min(1, dt * 14);
-          camera.position.set(playerPos.x, playerPos.y + currentEye, playerPos.z);
+          camera.position.set(playerPos.x, playerPos.y + currentEye + (isSliding ? 0 : bobY * 0.25), playerPos.z);
 
           camera.rotation.y = yaw;
           camera.rotation.x = pitch;
@@ -1910,19 +2463,48 @@
           camera.fov += (targetFOV - camera.fov) * Math.min(1, dt * 12);
           camera.updateProjectionMatrix();
 
-          recoilOffset += (0 - recoilOffset) * Math.min(1, dt * 18);
+          recoilOffset = clamp(recoilOffset + (0 - recoilOffset) * Math.min(1, dt * 20), 0, 0.06);
           const targetWeaponPos = isADS ? adsPos : hipPos;
           weaponGroup.position.lerp(targetWeaponPos, Math.min(1, dt * 15));
+          weaponGroup.position.x += bobX;
+          weaponGroup.position.y -= bobY + reloadWave * 0.06;
           weaponGroup.position.z += recoilOffset;
-          if (isReloading) weaponGroup.position.y -= 0.14;
 
-          const targetRoll = isSliding ? 0.28 : (isSprinting ? 0.15 : 0);
+          gunModelGroup.position.set(0, 0, recoilOffset * 0.75);
+          gunModelGroup.rotation.set(clamp(recoilOffset * 1.4, 0, 0.14), 0, 0);
+
+          const targetRoll = isSliding ? 0.20 : (isSprinting ? 0.10 : 0);
+          const targetYawTilt = isSprinting && !isADS ? 0.16 : 0;
+          weaponGroup.rotation.x = clamp(reloadWave * 0.18, 0, 0.25);
+          weaponGroup.rotation.y += (targetYawTilt - weaponGroup.rotation.y) * Math.min(1, dt * 12);
           weaponGroup.rotation.z += (targetRoll - weaponGroup.rotation.z) * Math.min(1, dt * 12);
-          weaponGroup.rotation.y += ((isSprinting && !isADS ? 0.25 : 0) - weaponGroup.rotation.y) * Math.min(1, dt * 12);
+
+          const sway = clamp(Math.sin(walkBobPhase * 0.5) * 0.04, -0.05, 0.05);
+
+          rightArmPivot.position.set(
+            0.045,
+            -0.065 - reloadWave * 0.02,
+            0.10 + recoilOffset * 0.5
+          );
+          rightArmPivot.rotation.set(
+            clamp(0.18 + recoilOffset * 0.9 - reloadWave * 0.12, -0.2, 0.45),
+            clamp(-0.10, -0.35, 0.2),
+            clamp(0.03 + sway, -0.2, 0.25)
+          );
+
+          leftArmPivot.position.set(
+            -0.045,
+            -0.072 - reloadWave * 0.035,
+            -0.04 + recoilOffset * 0.35
+          );
+          leftArmPivot.rotation.set(
+            clamp(0.20 + recoilOffset * 0.6 + reloadWave * 0.24, -0.2, 0.55),
+            clamp(0.14 + reloadWave * 0.16, -0.2, 0.45),
+            clamp(-0.04 - sway, -0.25, 0.2)
+          );
 
           crosshairEl.style.opacity = isADS ? '0' : '1';
 
-          // Enviar posição e estado para outros jogadores na sala (~20Hz)
           netSendTimer += dt;
           if (connections.size > 0 && netSendTimer >= 0.05) {
             netSendTimer = 0;
